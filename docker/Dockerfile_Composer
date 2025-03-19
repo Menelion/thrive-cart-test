@@ -1,0 +1,5 @@
+FROM composer:latest
+
+RUN git config --global --add safe.directory /app
+WORKDIR /app
+ENTRYPOINT ["composer"]
