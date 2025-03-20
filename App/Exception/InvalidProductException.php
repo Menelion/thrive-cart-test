@@ -5,7 +5,7 @@ namespace App\Exception;
 use RuntimeException;
 use Throwable;
 
-class ChargeException extends RuntimeException
+class InvalidProductException extends RuntimeException
 {
     public function __construct(string $message, ?Throwable $previous = null)
     {

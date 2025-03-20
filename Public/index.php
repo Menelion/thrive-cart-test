@@ -20,5 +20,6 @@ $container = $containerBuilder->build();
 $app = Bridge::create($container);
 
 (require __DIR__ . '/../App/Config/routes.php')($app);
-$app->run();
 
+session_start();
+$app->run();

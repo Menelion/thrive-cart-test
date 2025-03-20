@@ -4,12 +4,12 @@ namespace App\Value;
 
 use InvalidArgumentException;
 
-class ChargeCost
+class ProductPrice
 {
     public function __construct(private int $value)
     {
         if ($value < 0) {
-            throw new InvalidArgumentException('Charge cost cannot be negative.');
+            throw new InvalidArgumentException('Product price cannot be negative.');
         }
     }
 
@@ -18,8 +18,8 @@ class ChargeCost
         return $this->value;
     }
 
-    public function toEuros(): float
+    public function toDollars(): float
     {
-        return $this->value / 100;
+        return round($this->value / 100, 2);
     }
 }
