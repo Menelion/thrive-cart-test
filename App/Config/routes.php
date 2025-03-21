@@ -8,8 +8,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
 
 return function (App $app) {
-    $app->post('/basket/add/{code}', [BasketController::class, 'add']);
-    $app->get('/basket/total', [BasketController::class, 'total']);
+    $app->any('/basket/add/{code}', [BasketController::class, 'add']);
+    $app->get('/basket/total', [BasketController::class, 'getTotal']);
     $app->get('/api-docs', function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
         $openapi = Generator::scan([__DIR__ . '/../Controller']);
         $response->getBody()->write($openapi->toJson());

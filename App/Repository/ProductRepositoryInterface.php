@@ -6,5 +6,5 @@ use App\Model\Product;
 
 interface ProductRepositoryInterface
 {
-    public function findByCode(string $code): ?Product;
+    public function findByCode(string $code, bool $caseSensitive): ?Product;
 }

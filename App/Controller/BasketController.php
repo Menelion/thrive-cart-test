@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace App\Controller;
 
+use App\Repository\ProductRepositoryInterface;
 use App\Service\BasketService;
 use Fig\Http\Message\StatusCodeInterface;
 use OpenApi\Attributes as OA;
@@ -16,7 +17,10 @@ use Throwable;
 )]
 class BasketController
 {
-    public function __construct(private BasketService $basketService)
+    public function __construct(
+        private BasketService $basketService,
+        private ProductRepositoryInterface $productRepository,
+    )
     {
     }
 
@@ -30,9 +34,17 @@ class BasketController
             '400' => 'Invalid product code'
         ]
     )]
-    public function add(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    public function add(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $code = $args['code'];
+        $code = strtolower($request->getAttribute('code'));
+        $product = $this->productRepository->findByCode(code: $code, caseSensitive: false);
+
+        if (!$product) {
+            return $response->withStatus(
+                StatusCodeInterface::STATUS_NOT_FOUND,
+                sprintf('Product with code %s not found', $code)
+            );
+        }
 
         try {
             $basket = $this->basketService->addProduct($code);

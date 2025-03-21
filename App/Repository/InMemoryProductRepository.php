@@ -19,8 +19,19 @@ class InMemoryProductRepository implements ProductRepositoryInterface
             ];
     }
 
-    public function findByCode(string $code): ?Product
+    public function findByCode(string $code, bool $caseSensitive = true): ?Product
     {
-        return array_reduce($this->products, fn(?Product $product, Product $item) => $product ?? ($item->getCode() === $code ? $item : null), null);
+        if (!$caseSensitive) {
+            return array_reduce(
+                $this->products,
+                fn(?Product $product, Product $item) => $product
+                    ?? (strtolower($item->getCode()) === strtolower($code) ? $item : null)
+            );
+        }
+
+        return array_reduce(
+            $this->products,
+            fn(?Product $product, Product $item) => $product ?? ($item->getCode() === $code ? $item : null)
+        );
     }
 }

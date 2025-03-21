@@ -4,7 +4,7 @@ namespace Tests\App\Service;
 
 use App\Model\Basket;
 use App\Model\Product;
-use App\Repository\ProductRepositoryInterface;
+use App\Repository\InMemoryProductRepository;
 use App\Service\BasketService;
 use PHPUnit\Framework\TestCase;
 use PhpUnit\Framework\MockObject\MockObject;
@@ -13,7 +13,7 @@ use SlimSession\Helper as Session;
 
 class BasketServiceTest extends TestCase
 {
-    private ProductRepositoryInterface $productRepository;
+    private InMemoryProductRepository $productRepository;
     private Session $session;
     
     protected function setUp(): void
@@ -26,7 +26,7 @@ class BasketServiceTest extends TestCase
 
         $_SESSION = [];
         $this->session = new Session();
-        $this->productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $this->productRepository = new InMemoryProductRepository();
     }
 
     protected function tearDown(): void
@@ -38,11 +38,6 @@ class BasketServiceTest extends TestCase
     public function testAddProduct(): void
     {
         $product = Product::fromArray(['code' => 'R01', 'name' => 'Red Widget', 'price' => 32.95]);
-        $this->productRepository
-            ->expects($this->once())
-            ->method('findByCode')
-            ->with('R01')
-            ->willReturn($product);
         $basketService = new BasketService($this->productRepository, $this->session);
 
         $result = $basketService->addProduct('R01');
@@ -54,7 +49,7 @@ class BasketServiceTest extends TestCase
         $this->assertIsArray($this->session['basket']);
         $this->assertArrayHasKey('products', $this->session['basket']);
     }
-    
+
     public function testSaveBasketToSession(): void
     {
         $product = Product::fromArray(['code' => 'R01', 'name' => 'Red Widget', 'price' => 32.95]);
@@ -72,4 +67,10 @@ class BasketServiceTest extends TestCase
         $this->assertArrayHasKey('products', $this->session['basket']);
     }
 
+    public function testGetTotal() {
+        $service = new BasketService($this->productRepository, $this->session);
+        $service->addProduct('R01');
+        $service->addProduct('G01');
+        $this->assertEquals(57.90, $service->getTotal());
+    }
 }
