@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Exception\InvalidProductException;
 use App\Model\Basket;
 use App\Repository\ProductRepositoryInterface;
+use SlimSession\Helper as Session;
 
 class BasketService
 {
@@ -12,14 +13,16 @@ class BasketService
 
     public function __construct(private ProductRepositoryInterface $productRepository)
     {
-        session_start();
-        $this->basket = isset($_SESSION['basket'])
-            ? Basket::fromArray($_SESSION['basket'])
+        $session = new Session();
+        $this->basket = isset($session['basket'])
+            ? Basket::fromArray($session->basket)
             : new Basket([]);
     }
 
-    public function __destruct() {
-        $_SESSION['basket'] = $this->basket->toArray();
+    public function __destruct()
+    {
+        $session = new Session();
+        $session->basket = $this->basket->toArray();
     }
 
     public function addProduct(string $code): Basket

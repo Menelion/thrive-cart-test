@@ -6,6 +6,7 @@ use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
 use DI\Bridge\Slim\Bridge;
 use Dotenv\Dotenv;
+use Slim\Middleware\Session;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
@@ -18,8 +19,14 @@ $containerBuilder = new ContainerBuilder();
 $container = $containerBuilder->build();
 
 $app = Bridge::create($container);
+$app->add(
+    new Session([
+        'name' => 'basket',
+        'autorefresh' => true,
+        'lifetime' => '1 hour'
+    ])
+    );
 
 (require __DIR__ . '/../App/Config/routes.php')($app);
 
-session_start();
 $app->run();

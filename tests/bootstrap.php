@@ -6,6 +6,7 @@ use Psr\Container\ContainerInterface;
 use Slim\Factory\AppFactory;
 use Slim\App;
 use Dotenv\Dotenv;
+use Slim\Middleware\Session;
 
 function createApp(): App
 {
@@ -26,6 +27,15 @@ function createApp(): App
     (require __DIR__ . '/../App/Config/dependencies.php')($containerBuilder);
     $container = $containerBuilder->build();
     $app = $container->get(App::class);
+    $app->add(
+        new Session(
+            [
+                'name' => 'basketTest',
+                'autorefresh' => true,
+                'lifetime' => '1 hour',
+            ]
+        )
+    );
     (require __DIR__ . '/../App/Config/routes.php')($app);
 
     return $app;
