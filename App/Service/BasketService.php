@@ -10,21 +10,25 @@ use SlimSession\Helper as Session;
 class BasketService
 {
     private Basket $basket;
+    private Session $session;
+    private ProductRepositoryInterface $productRepository;
 
-    public function __construct(private ProductRepositoryInterface $productRepository)
+    public function __construct(ProductRepositoryInterface $productRepository, Session|null $session = null)
     {
-        $session = new Session();
-        $this->basket = isset($session['basket'])
-            ? Basket::fromArray($session->basket)
+        $this->productRepository = $productRepository;
+        $this->session = $session ?? new Session();
+        $this->basket = isset($this->session['basket'])
+            ? Basket::fromArray($this->session['basket'])
             : new Basket([]);
     }
 
-    public function __destruct()
-    {
-        $session = new Session();
-        $session->basket = $this->basket->toArray();
-    }
-
+    /**
+     * Adds a product to the basket
+     *
+     * @param string $code The product code
+     * @return Basket The updated basket
+     * @throws InvalidProductException If the product is not found
+     */
     public function addProduct(string $code): Basket
     {
         $product = $this->productRepository->findByCode($code);
@@ -34,10 +38,26 @@ class BasketService
         }
 
         $this->basket->add($product);
+        $this->saveBasketToSession();
 
         return $this->basket;
     }
 
+    /**
+     * Saves the current basket state to the session
+     *
+     * @return void
+     */
+    public function saveBasketToSession(): void
+    {
+        $this->session['basket'] = $this->basket->toArray();
+    }
+
+    /**
+     * Gets the total price of all products in the basket
+     *
+     * @return float The total price
+     */
     public function getTotal(): float
     {
         return round(
