@@ -16,22 +16,25 @@ class InMemoryProductRepository implements ProductRepositoryInterface
             new Product('R01', 'Red Widget', new ProductPrice(3295)),
             new Product('G01', 'Green Widget', new ProductPrice(2495)),
             new Product('B01', 'Blue Widget', new ProductPrice(795)),
-            ];
+        ];
     }
 
     public function findByCode(string $code, bool $caseSensitive = true): ?Product
     {
-        if (!$caseSensitive) {
-            return array_reduce(
-                $this->products,
-                fn(?Product $product, Product $item) => $product
-                    ?? (strtolower($item->getCode()) === strtolower($code) ? $item : null)
-            );
-        }
+        foreach ($this->products as $product) {
+            $productCode = $product->getCode();
+            $searchCode = $code;
 
-        return array_reduce(
-            $this->products,
-            fn(?Product $product, Product $item) => $product ?? ($item->getCode() === $code ? $item : null)
-        );
+            if (!$caseSensitive) {
+                $productCode = strtolower($productCode);
+                $searchCode = strtolower($searchCode);
+            }
+
+            if ($productCode === $searchCode) {
+                return $product;
+            }
+        }
+        
+        return null;
     }
 }

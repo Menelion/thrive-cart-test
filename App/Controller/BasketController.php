@@ -54,7 +54,11 @@ class BasketController
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(StatusCodeInterface::STATUS_CREATED);
         } catch (Throwable $e) {
-            return $response->withStatus(StatusCodeInterface::STATUS_BAD_REQUEST, $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(StatusCodeInterface::STATUS_BAD_REQUEST, $e->getMessage());
         }
     }
 

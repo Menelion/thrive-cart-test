@@ -5,6 +5,8 @@ namespace App\Service;
 use App\Exception\InvalidProductException;
 use App\Model\Basket;
 use App\Repository\ProductRepositoryInterface;
+use App\Strategy\DeliveryCostStrategy;
+use App\Strategy\DiscountStrategy;
 use SlimSession\Helper as Session;
 
 class BasketService
@@ -12,10 +14,19 @@ class BasketService
     private Basket $basket;
     private Session $session;
     private ProductRepositoryInterface $productRepository;
+    private DeliveryCostStrategy $deliveryCostStrategy;
+    private DiscountStrategy $discountStrategy;
 
-    public function __construct(ProductRepositoryInterface $productRepository, Session|null $session = null)
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        DeliveryCostStrategy $deliveryCostStrategy,
+        DiscountStrategy $discountStrategy,
+        Session|null $session = null
+    )
     {
         $this->productRepository = $productRepository;
+        $this->deliveryCostStrategy = $deliveryCostStrategy;
+        $this->discountStrategy = $discountStrategy;
         $this->session = $session ?? new Session();
         $this->basket = isset($this->session['basket'])
             ? Basket::fromArray($this->session['basket'])
@@ -31,7 +42,7 @@ class BasketService
      */
     public function addProduct(string $code): Basket
     {
-        $product = $this->productRepository->findByCode($code);
+        $product = $this->productRepository->findByCode(code: $code, caseSensitive: false);
 
         if (!$product) {
             throw new InvalidProductException(sprintf('Product with code %s not found', $code));
@@ -60,9 +71,14 @@ class BasketService
      */
     public function getTotal(): float
     {
-        return round(
-            num: array_sum(array_map(fn($item) => $item->getPrice()->toCents(), $this->basket->getProducts())) / 100,
+        $subtotal = round(
+            num: array_sum(array_map(fn($item) => $item->getPrice()->toDollars(), $this->basket->getProducts())),
             precision: 2
         );
+
+        $discount = $this->discountStrategy->applyDiscount($this->basket->getProducts());
+        $deliveryCost = $this->deliveryCostStrategy->calculateCost($subtotal - $discount);
+
+        return round($subtotal - $discount + $deliveryCost, 2);
     }
 }

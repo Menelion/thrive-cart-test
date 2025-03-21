@@ -6,6 +6,8 @@ use App\Model\Basket;
 use App\Model\Product;
 use App\Repository\InMemoryProductRepository;
 use App\Service\BasketService;
+use App\Strategy\DeliveryCostStrategy;
+use App\Strategy\DiscountStrategy;
 use PHPUnit\Framework\TestCase;
 use PhpUnit\Framework\MockObject\MockObject;
 use ReflectionProperty;
@@ -15,7 +17,7 @@ class BasketServiceTest extends TestCase
 {
     private InMemoryProductRepository $productRepository;
     private Session $session;
-    
+
     protected function setUp(): void
     {
         parent::setUp();
