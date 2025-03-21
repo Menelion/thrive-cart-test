@@ -17,10 +17,12 @@ class Product
     /** @param mixed[] $data */
     public static function fromArray(array $data): self
     {
+        $priceInCents = (int) ($data['price'] * 100);
+
         return new self(
             code: $data['code'],
             name: $data['name'],
-            price: new ProductPrice($data['price'] * 100),
+            price: new ProductPrice($priceInCents),
         );
     }
 

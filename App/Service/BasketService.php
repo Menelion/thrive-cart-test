@@ -22,7 +22,7 @@ class BasketService
         $_SESSION['basket'] = $this->basket->toArray();
     }
 
-    public function addProduct(string $code): void
+    public function addProduct(string $code): Basket
     {
         $product = $this->productRepository->findByCode($code);
 
@@ -31,10 +31,15 @@ class BasketService
         }
 
         $this->basket->add($product);
+
+        return $this->basket;
     }
 
     public function getTotal(): float
     {
-        return array_sum(array_map(fn($item) => $item->getPrice()->toCents(), $this->basket->getProducts())) / 100;
+        return round(
+            num: array_sum(array_map(fn($item) => $item->getPrice()->toCents(), $this->basket->getProducts())) / 100,
+            precision: 2
+        );
     }
 }
