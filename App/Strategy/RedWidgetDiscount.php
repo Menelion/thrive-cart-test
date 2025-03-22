@@ -9,13 +9,13 @@ class RedWidgetDiscount implements DiscountStrategy
     /** @param Product[] $products */
     public function applyDiscount(array $products): float
     {
-        $redWidgets = array_filter($products, fn($item) => $item->code === 'R01');
+        $redWidgets = array_values(array_filter($products, fn($item) => $item->code === 'R01')); // Reindex array
         $discount = 0;
 
         if (count($redWidgets) >= 2) {
-            $discount = round(num: ($redWidgets[1]->getPrice()->toCents() * 0.5), precision: 2); // Apply half-price to second one
+            $discount = round($redWidgets[1]->getPrice()->toDollars() * 0.5, 2); // Convert cents to dollars first
         }
 
         return $discount;
     }
-}
+        }
