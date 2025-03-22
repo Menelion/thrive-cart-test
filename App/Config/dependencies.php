@@ -5,6 +5,8 @@ use DI\ContainerBuilder;
 use App\Config\DatabaseFactory;
 use App\Repository\ProductRepositoryInterface;
 use App\Repository\InMemoryProductRepository;
+use App\Strategy\DiscountStrategy;
+use App\Strategy\RedWidgetDiscount;
 use ParagonIE\EasyDB\EasyDB;
 
 return function (ContainerBuilder $containerBuilder)
@@ -20,5 +22,6 @@ return function (ContainerBuilder $containerBuilder)
             $_ENV['MYSQL_PASSWORD']
         ),
         ProductRepositoryInterface::class => DI\autowire(InMemoryProductRepository::class),
+        DiscountStrategy::class => DI\autowire(RedWidgetDiscount::class),
     ]);
 };

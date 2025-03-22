@@ -6,10 +6,8 @@ use App\Model\Basket;
 use App\Model\Product;
 use App\Repository\InMemoryProductRepository;
 use App\Service\BasketService;
-use App\Strategy\LowOrderDelivery;
-use App\Strategy\MediumOrderDelivery;
-use App\Strategy\FreeDelivery;
 use App\Strategy\RedWidgetDiscount;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SlimSession\Helper as Session;
 
@@ -22,11 +20,12 @@ class BasketServiceTest extends TestCase
     {
         parent::setUp();
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
         }
 
-        $_SESSION = [];
+        session_start();
+        $_SESSION = []; // Reset stored session data
         $this->session = new Session();
         $this->productRepository = new InMemoryProductRepository();
     }
@@ -52,29 +51,12 @@ class BasketServiceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider basketDataProvider
-     */
+    #[DataProvider('basketDataProvider')]
     public function testExampleBaskets(array $products, float $expectedTotal)
     {
-        // Calculate subtotal
-        $subtotal = array_sum(array_map(fn($code) => $this->productRepository->findByCode($code)->getPrice()->toDollars(), $products));
-
-        // Apply discount before determining the delivery strategy
         $discountStrategy = new RedWidgetDiscount();
-        $discount = $discountStrategy->applyDiscount(array_map(fn($code) => $this->productRepository->findByCode($code), $products));
-        $adjustedSubtotal = $subtotal - $discount;
-
-        // Select correct delivery strategy **after discount is applied**
-        $deliveryStrategy = match (true) {
-            $adjustedSubtotal < 50 => new LowOrderDelivery(),
-            $adjustedSubtotal < 90 => new MediumOrderDelivery(),
-            default => new FreeDelivery(),
-        };
-
         $basketService = new BasketService(
             $this->productRepository,
-            $deliveryStrategy,
             $discountStrategy,
             $this->session
         );

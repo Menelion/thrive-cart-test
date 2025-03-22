@@ -6,6 +6,9 @@ use App\Exception\InvalidProductException;
 use App\Model\Basket;
 use App\Repository\ProductRepositoryInterface;
 use App\Strategy\DeliveryCostStrategy;
+use App\Strategy\LowOrderDelivery;
+use App\Strategy\MediumOrderDelivery;
+use App\Strategy\FreeDelivery;
 use App\Strategy\DiscountStrategy;
 use SlimSession\Helper as Session;
 
@@ -14,18 +17,15 @@ class BasketService
     private Basket $basket;
     private Session $session;
     private ProductRepositoryInterface $productRepository;
-    private DeliveryCostStrategy $deliveryCostStrategy;
     private DiscountStrategy $discountStrategy;
 
     public function __construct(
         ProductRepositoryInterface $productRepository,
-        DeliveryCostStrategy $deliveryCostStrategy,
         DiscountStrategy $discountStrategy,
         Session|null $session = null
     )
     {
         $this->productRepository = $productRepository;
-        $this->deliveryCostStrategy = $deliveryCostStrategy;
         $this->discountStrategy = $discountStrategy;
         $this->session = $session ?? new Session();
         $this->basket = isset($this->session['basket'])
@@ -34,11 +34,9 @@ class BasketService
     }
 
     /**
-     * Adds a product to the basket
+     * Adds a product to the basket.
      *
-     * @param string $code The product code
-     * @return Basket The updated basket
-     * @throws InvalidProductException If the product is not found
+     * @throws InvalidProductException If the product is not found.
      */
     public function addProduct(string $code): Basket
     {
@@ -55,9 +53,7 @@ class BasketService
     }
 
     /**
-     * Saves the current basket state to the session
-     *
-     * @return void
+     * Saves the current basket state to the session.
      */
     public function saveBasketToSession(): void
     {
@@ -65,9 +61,21 @@ class BasketService
     }
 
     /**
-     * Gets the total price of all products in the basket
+     * Determines the correct delivery strategy based on the subtotal.
+     */
+    private function getDeliveryStrategy(float $adjustedSubtotal): DeliveryCostStrategy
+    {
+        return match (true) {
+            $adjustedSubtotal < 50 => new LowOrderDelivery(),
+            $adjustedSubtotal < 90 => new MediumOrderDelivery(),
+            default => new FreeDelivery(),
+        };
+    }
+
+    /**
+     * Gets the total price of all products in the basket.
      *
-     * @return float The total price
+     * @return float The total price.
      */
     public function getTotal(): float
     {
@@ -77,8 +85,12 @@ class BasketService
         );
 
         $discount = $this->discountStrategy->applyDiscount($this->basket->getProducts());
-        $deliveryCost = $this->deliveryCostStrategy->calculateCost($subtotal - $discount);
+        $adjustedSubtotal = $subtotal - $discount;
 
-        return round($subtotal - $discount + $deliveryCost, 2);
+        // Select delivery strategy dynamically based on adjusted subtotal
+        $deliveryCostStrategy = $this->getDeliveryStrategy($adjustedSubtotal);
+        $deliveryCost = $deliveryCostStrategy->calculateCost($adjustedSubtotal);
+
+        return round($adjustedSubtotal + $deliveryCost, 2);
     }
 }

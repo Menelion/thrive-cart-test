@@ -2,7 +2,12 @@
 <phpunit
          bootstrap="tests/bootstrap.php"
          colors="false"
-         stopOnFailure="true">
+         stopOnFailure="true"
+         stopOnError="true"
+         stopOnIncomplete="true"
+         stopOnSkipped="true"
+         stopOnWarning="true"
+         cacheResult="false">
     <testsuites>
         <testsuite name="Unit Tests">
             <directory>tests</directory>
