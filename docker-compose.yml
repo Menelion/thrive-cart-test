@@ -1,0 +1,66 @@
+services:
+  php:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: php-apache
+    volumes:
+      - ./docker/config/php/php.ini:/usr/local/etc/php/php.ini
+      - .:/var/www/html
+      - ./docker/config/apache/apache.conf:/etc/apache2/sites-available/000-default.conf
+      - ./logs/apache:/var/log/apache2
+    ports:
+      - "0.0.0.0:80:80"
+    environment:
+      APACHE_LOG_DIR: /var/log/apache2
+    depends_on:
+      - mariadb
+    networks:
+      - app-network
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ./docker/data/db:/var/lib/mysql
+      - ./docker/config/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      - PMA_HOST=mariadb
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - app-network
+
+  composer:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile_Composer
+    container_name: composer
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["install"]
+    depends_on:
+      - php
+
+networks:
+  app-network:
+    driver: bridge
